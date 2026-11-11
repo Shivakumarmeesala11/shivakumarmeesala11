@@ -1,0 +1,150 @@
+name: Install my profile
+
+on:
+  push:
+    paths: ['.github/workflows/install-profile.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  design:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the artwork and profile
+        shell: python
+        run: |
+          from pathlib import Path
+          from html import escape
+
+          p = Path('assets')
+          p.mkdir(exist_ok=True)
+          copper, cream, muted = '#dfa574', '#f1eee5', '#aab7b7'
+
+          def svg(body, h):
+              return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="{h}" viewBox="0 0 1200 {h}">
+              <rect width="1200" height="{h}" rx="18" fill="#10191c"/>
+              <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#233034" stroke-width=".6"/></pattern></defs>
+              <rect width="1200" height="{h}" rx="18" fill="url(#grid)"/>
+              <g font-family="Arial, sans-serif">{body}</g></svg>'''
+
+          def text(x, y, s, size=18, fill=cream, extra=''):
+              return f'<text x="{x}" y="{y}" fill="{fill}" font-size="{size}" {extra}>{escape(s)}</text>'
+
+          b = text(54,52,'SM / THE CONNECTION',16,copper,'letter-spacing="4"')
+          b += text(54,149,'Shivakumar',68,cream,'font-weight="700"')
+          b += text(54,224,'Meesala.',68,cream,'font-weight="700"')
+          b += text(57,279,'Circuits. Code. People.',25,copper)
+          b += text(57,330,'Electrical engineering / embedded systems / technical support',17,muted)
+          b += '<path d="M54 364H1146" stroke="#344144"/>'
+          b += text(57,397,'LONDON, UK',13,muted,'letter-spacing="2"')
+          b += text(767,397,'EXPLORE THE WORK BELOW',13,copper,'letter-spacing="2"')
+
+          for i,r in enumerate([43,65,87,109]):
+              b += f'<circle cx="970" cy="185" r="{r}" fill="none" stroke="{copper}" stroke-opacity="{.8-i*.15}" stroke-width="1.4"/>'
+
+          b += '<circle cx="970" cy="185" r="126" fill="none" stroke="#516365" stroke-dasharray="2 12"/>'
+
+          traces = [
+              'M700 75H780L835 130H900',
+              'M700 185H860',
+              'M750 295H800L855 240H900'
+          ]
+          for i,d in enumerate(traces):
+              b += f'<path d="{d}" fill="none" stroke="#58635e" stroke-width="1.5"/>'
+              b += f'<path d="{d}" fill="none" stroke="{copper}" stroke-width="3" stroke-linecap="round" stroke-dasharray="16 360"><animate attributeName="stroke-dashoffset" from="376" to="0" dur="5s" begin="-{i*1.6}s" repeatCount="indefinite"/></path>'
+
+          b += '<circle cx="970" cy="185" r="8" fill="#dfa574"><animate attributeName="r" values="7;10;7" dur="5s" repeatCount="indefinite"/></circle>'
+          b += text(890,345,'POWER / SIGNAL / RESPONSE',11,muted,'letter-spacing="1"')
+          (p/'connection.svg').write_text(svg(b,430))
+
+          projects = [
+              ('01','solar-ev','Solar to wireless EV charging',
+               'Two PV inputs. MPPT control. Wireless transfer.',
+               'STM32 / MATLAB / SIMULINK','power'),
+              ('02','wireless-power','Power, without the wire',
+               'A solar-powered wireless energy transfer study.',
+               'SOLAR PV / POWER ELECTRONICS / PCB','coil'),
+              ('03','bluetooth','An announcement, over the air',
+               'An Arduino-based Bluetooth announcement prototype.',
+               'ARDUINO / BLUETOOTH / PROTEUS','signal'),
+              ('04','virtual-keyboard','A keyboard you don’t touch',
+               'Hand gestures as an input interface.',
+               'PYTHON / OPENCV / COMPUTER VISION','keys')
+          ]
+
+          for num,slug,title,desc,tools,kind in projects:
+              a = text(40,43,f'{num} / ACADEMIC PROJECT',12,copper,'letter-spacing="2"')
+              a += text(40,99,title,31,cream,'font-weight="700"')
+              a += text(40,140,desc,18,muted)
+              a += text(40,199,tools,12,copper,'letter-spacing="1.5"')
+              a += text(40,242,'OPEN PROJECT ON MY PORTFOLIO ↗',12,muted,'letter-spacing="1.5"')
+
+              if kind in ['power','coil']:
+                  for cx in [925,1045]:
+                      for r in [22,34,46]:
+                          a += f'<ellipse cx="{cx}" cy="135" rx="{r/2}" ry="{r}" fill="none" stroke="{copper}" stroke-width="1.4"/>'
+                  a += '<path d="M950 135H1020" stroke="#70817e" stroke-dasharray="3 6"/>'
+                  if kind == 'power':
+                      a += '<path d="M830 105H875V165H830Z M830 125H875 M852 105V165" fill="none" stroke="#aab7b7"/>'
+              elif kind == 'signal':
+                  a += '<path d="M870 145H910V105H950V165H990V105H1030V145H1090" fill="none" stroke="#dfa574" stroke-width="2"/>'
+                  a += text(925,210,'TX → RX',16,muted,'letter-spacing="4"')
+              else:
+                  for row in range(3):
+                      for col in range(6):
+                          a += f'<rect x="{870+col*36}" y="{80+row*36}" width="27" height="27" rx="4" fill="none" stroke="{copper}"/>'
+                  a += '<path d="M966 207L980 166L994 207Z" fill="#aab7b7"/>'
+
+              (p/f'{slug}.svg').write_text(svg(a,280))
+
+          readme = [
+              '<a href="https://shivakumarmeesala.space/"><img src="assets/connection.svg" width="100%" alt="Shivakumar Meesala. Circuits. Code. People. Animated copper signal traces and wireless coils." /></a>',
+              '',
+              'I’m Shiva, based in London. My academic work has taken me from solar charging and embedded systems to a keyboard controlled by hand gestures. Alongside that, I’ve worked in customer support at Amazon and B&M.',
+              '',
+              'I like the part where something doesn’t work yet: tracing the problem, trying a fix, and explaining what happened.',
+              '',
+              '[Portfolio ↗](https://shivakumarmeesala.space/) &nbsp; / &nbsp; [LinkedIn ↗](https://www.linkedin.com/in/meesala-shiva-kumar-447543341) &nbsp; / &nbsp; [Email ↗](mailto:Meesalashivakumar12@gmail.com)',
+              '',
+              '### A few things I’ve worked on',
+              '',
+              'These four academic projects are documented on my portfolio. The cards open that project collection; source files are not published in this repository yet.',
+              ''
+          ]
+
+          for num,slug,title,*_ in projects:
+              readme += [
+                  f'<a href="https://shivakumarmeesala.space/#projects"><img src="assets/{slug}.svg" width="100%" alt="{escape(title)} — view academic projects on my portfolio" /></a>',
+                  ''
+              ]
+
+          readme += [
+              '<details>',
+              '<summary><b>What I used, and what I’m doing now</b></summary>',
+              '',
+              'MATLAB / Simulink, STM32, Arduino, Proteus, PCB design, Python and OpenCV feature across my academic work. Project descriptions and context are on my portfolio.',
+              '',
+              'I completed my MSc in Electrical and Electronics Engineering at Greenwich and I’m now studying Project Planning and Management at Bradford.',
+              '',
+              'At Amazon Development Center (2022–2024), I supported international customers with account, access and transaction issues. Since September 2024, I’ve worked in customer service and store operations at B&M.',
+              '',
+              '</details>',
+              '',
+              '---',
+              '',
+              '**I’m looking for my next step in electrical engineering, embedded systems or technical support.** If that fits your team, [send me a message](mailto:Meesalashivakumar12@gmail.com).',
+              ''
+          ]
+          Path('README.md').write_text('\n'.join(readme))
+
+      - name: Save the profile
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md assets/
+          git diff --cached --quiet || git commit -m "Give my profile a circuit-inspired design"
+          git push
